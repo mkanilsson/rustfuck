@@ -49,10 +49,10 @@ fn codegen_statments(statments: Vec<AST>) -> String {
 
 fn codegen_statment(statment: &AST) -> String {
     match statment {
-        AST::Right => codegen_right().to_owned(),
-        AST::Left => codegen_left().to_owned(),
-        AST::Add => codegen_add().to_owned(),
-        AST::Subtract => codegen_subtract().to_owned(),
+        AST::Right(times) => codegen_right(*times),
+        AST::Left(times) => codegen_left(*times),
+        AST::Add(times) => codegen_add(*times),
+        AST::Subtract(times) => codegen_subtract(*times),
         AST::PrintChar => codegen_print_char().to_owned(),
         AST::GetChar => codegen_get_char().to_owned(),
         AST::Loop(statments) => codegen_loop(statments),
@@ -60,20 +60,29 @@ fn codegen_statment(statment: &AST) -> String {
     }
 }
 
-fn codegen_right() -> &'static str {
+// TODO: Loop over x times if optimization is disabled
+fn codegen_right(times: usize) -> String {
     TEMPLATE_RIGHT
+        .to_owned()
+        .replace("{TIMES}", &times.to_string())
 }
 
-fn codegen_left() -> &'static str {
+fn codegen_left(times: usize) -> String {
     TEMPLATE_LEFT
+        .to_owned()
+        .replace("{TIMES}", &times.to_string())
 }
 
-fn codegen_add() -> &'static str {
+fn codegen_add(times: usize) -> String {
     TEMPLATE_ADD
+        .to_owned()
+        .replace("{TIMES}", &times.to_string())
 }
 
-fn codegen_subtract() -> &'static str {
+fn codegen_subtract(times: usize) -> String {
     TEMPLATE_SUBTRACT
+        .to_owned()
+        .replace("{TIMES}", &times.to_string())
 }
 
 fn codegen_print_char() -> &'static str {

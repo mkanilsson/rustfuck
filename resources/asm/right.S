@@ -1,2 +1,2 @@
     // >
-        addq    $1, -8(%rbp)
+        addq    ${TIMES}, -8(%rbp)
