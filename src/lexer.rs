@@ -13,13 +13,8 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    pub fn new_from_path(filepath: &str) -> Self {
-        let err = format!("Failed to open {filepath}");
-        let data = fs::read_to_string(filepath)
-            .expect(&err)
-            .chars()
-            .into_iter()
-            .collect();
+    pub fn new(source: String) -> Self {
+        let data = source.chars().into_iter().collect();
 
         Self {
             i: 0,

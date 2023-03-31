@@ -7,47 +7,168 @@ mod token;
 use lexer::Lexer;
 use parser::Parser;
 
-use std::{env, fs, process::Command};
+use std::{
+    ffi::OsStr,
+    fs,
+    path::{Path, PathBuf},
+    process::Command,
+    time::SystemTime,
+};
+
+use clap::Parser as CliParser;
+
+/// Brainfuck to x86_64 intel assembly Compiler
+#[derive(CliParser)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    /// Brainfuck source file
+    input_path: String,
+
+    /// Output path
+    #[arg(short = 'o', long)]
+    output_path: Option<String>,
+
+    /// Output generated assembly
+    #[arg(short = 'S', long)]
+    assembly: bool,
+
+    /// Keep intermediate files
+    #[arg(long)]
+    keep_files: bool,
+
+    /// Print generated AST
+    #[arg(long = "ast")]
+    dump_ast: bool,
+}
+
+#[derive(Debug)]
+struct CompilationPaths {
+    pub source_path: PathBuf,
+    pub asm_path: PathBuf,
+    pub object_path: PathBuf,
+    pub output_path: PathBuf,
+}
+
+impl CompilationPaths {
+    pub fn new(input_file: &str, output_file: &str, use_tmp: bool) -> Self {
+        let source_path = Path::new(input_file).to_owned();
+        let output_path = Path::new(output_file).to_owned();
+
+        let output_path_no_extension = if use_tmp {
+            let mut tmp_dir = std::env::temp_dir();
+
+            let timestamp = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .expect("Why is your computers clock set to before 1970? This is on you!");
+
+            let file_name = format!(
+                "{}_{}",
+                output_path.file_stem().unwrap().to_str().unwrap(),
+                timestamp.as_secs()
+            );
+
+            tmp_dir.push(file_name);
+            tmp_dir
+        } else {
+            let mut path = output_path.parent().unwrap().to_owned();
+            path.push(output_path.file_name().unwrap());
+            path
+        };
+
+        let mut asm_path = output_path_no_extension.clone();
+        asm_path.set_extension("S");
+
+        let mut object_path = output_path_no_extension.clone();
+        object_path.set_extension("o");
+
+        Self {
+            source_path,
+            asm_path,
+            object_path,
+            output_path,
+        }
+    }
+}
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let cli = Cli::parse();
 
-    if args.len() < 2 {
-        panic!("Expeced 1 arguments");
+    let output_path = if let Some(path) = &cli.output_path {
+        path.clone()
+    } else {
+        if cli.assembly { "a.S" } else { "a.out" }.to_string()
+    };
+
+    let compilation_paths = CompilationPaths::new(&cli.input_path, &output_path, !cli.keep_files);
+
+    let source = fs::read_to_string(&compilation_paths.source_path).expect(&format!(
+        "Failed to read source {}",
+        compilation_paths.source_path.to_str().unwrap()
+    ));
+
+    let lexer = Lexer::new(source);
+    let ast = Parser::parse(lexer);
+
+    if cli.dump_ast {
+        println!("{:#?}", ast);
+        return;
     }
 
-    let file_path = &args[1];
-    let lexer = Lexer::new_from_path(file_path);
-
-    // let tokens: Vec<_> = lexer.into_iter().collect();
-    // println!("{:#?}", tokens);
-
-    let ast = Parser::parse(lexer);
-    // println!("{:#?}", ast);
-
     let asm = codegen::codegen(ast);
-    let filename = "a";
-    save(filename, &asm);
-    compile(filename);
+
+    if stop_at_asm(&compilation_paths.output_path, &cli) {
+        save(&compilation_paths.output_path, &asm); // Respect specified output path
+        return;
+    } else {
+        save(&compilation_paths.asm_path, &asm);
+    }
+
+    compile(&compilation_paths);
+
+    // NOTE: Should the files be removed or should they stay in tmp?
+    if !cli.keep_files {
+        fs::remove_file(&compilation_paths.asm_path).expect(&format!(
+            "Failed to remove asm file {}",
+            compilation_paths.asm_path.to_str().unwrap()
+        ));
+
+        fs::remove_file(&compilation_paths.object_path).expect(&format!(
+            "Failed to remove object file {}",
+            compilation_paths.object_path.to_str().unwrap()
+        ));
+    }
 }
 
-fn save(filename: &str, data: &str) {
-    fs::write(format!("output/{filename}.S"), data).expect("Failed to write to file");
+fn stop_at_asm(output_path: &Path, cli: &Cli) -> bool {
+    if cli.assembly {
+        true
+    } else {
+        // if output file ends with .S or .s it will count as asm
+        if let Some(extension) = output_path.extension() {
+            extension.to_ascii_lowercase() == OsStr::new("s")
+        } else {
+            false
+        }
+    }
 }
 
-fn compile(filename: &str) {
-    let source = format!("output/{filename}.S");
-    let object = format!("output/{filename}.o");
-    let executable = format!("output/{filename}");
+fn save(output_path: &Path, data: &str) {
+    fs::write(output_path, data).expect("Failed to write asm file");
+}
 
-    println!("Running `as`...");
+fn compile(paths: &CompilationPaths) {
+    let asm_path = paths.asm_path.to_str().unwrap();
+    let obj_path = paths.object_path.to_str().unwrap();
+    let executable_path = paths.output_path.to_str().unwrap();
+
+    print!("Running `as`... ");
     let output = Command::new("as")
-        .args(&[source, "-o".into(), object.clone()])
+        .args(&[asm_path, "-o", obj_path])
         .output()
         .expect("Failed to run `as`. Make sure it's installed.");
 
     if !output.status.success() {
-        println!("`as` failed...");
+        println!("FAILED");
         String::from_utf8(output.stderr)
             .unwrap()
             .lines()
@@ -55,16 +176,16 @@ fn compile(filename: &str) {
 
         return;
     }
-    println!("`as` succeed...");
+    println!("SUCCESS");
 
-    println!("Running `gcc`...");
+    println!("Running `gcc`... ");
     let output = Command::new("gcc")
-        .args(&[object, "-o".into(), executable])
+        .args(&[obj_path, "-o", executable_path])
         .output()
         .expect("Failed to run `gcc`. Make sure it's installed.");
 
     if !output.status.success() {
-        println!("`gcc` failed...");
+        println!("FAILED");
         String::from_utf8(output.stderr)
             .unwrap()
             .lines()
@@ -72,5 +193,5 @@ fn compile(filename: &str) {
 
         return;
     }
-    println!("`gcc` succeed...");
+    println!("SUCCESS");
 }
