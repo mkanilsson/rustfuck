@@ -1,12 +1,15 @@
 mod ast;
+mod cli;
 mod codegen;
 mod lexer;
 mod parser;
 mod token;
 
+use cli::Cli;
 use lexer::Lexer;
 use parser::Parser;
 
+use clap::Parser as CliParser;
 use std::{
     ffi::OsStr,
     fs,
@@ -14,32 +17,6 @@ use std::{
     process::Command,
     time::SystemTime,
 };
-
-use clap::Parser as CliParser;
-
-/// Brainfuck to x86_64 intel assembly Compiler
-#[derive(CliParser)]
-#[command(author, version, about, long_about = None)]
-struct Cli {
-    /// Brainfuck source file
-    input_path: String,
-
-    /// Output path
-    #[arg(short = 'o', long)]
-    output_path: Option<String>,
-
-    /// Output generated assembly
-    #[arg(short = 'S', long)]
-    assembly: bool,
-
-    /// Keep intermediate files
-    #[arg(long)]
-    keep_files: bool,
-
-    /// Print generated AST
-    #[arg(long = "ast")]
-    dump_ast: bool,
-}
 
 #[derive(Debug)]
 struct CompilationPaths {
