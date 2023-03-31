@@ -16,6 +16,7 @@ Arguments:
 
 Options:
   -o, --output-path <OUTPUT_PATH>  Output path
+  -O                               Enable optimizations
   -S, --assembly                   Output generated assembly
       --keep-files                 Keep intermediate files
       --ast                        Print generated AST
@@ -84,7 +85,6 @@ this will dump the generated AST to stdout
 
 ## TODO
 
-* Command line flag for optimization
 * Better error handling
 * Unit tests and CI
 * Use linux syscalls instead of libc

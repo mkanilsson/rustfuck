@@ -91,7 +91,7 @@ fn main() {
         return;
     }
 
-    let asm = codegen::codegen(ast);
+    let asm = codegen::codegen(ast, cli.optimizations);
 
     if stop_at_asm(&compilation_paths.output_path, &cli) {
         save(&compilation_paths.output_path, &asm); // Respect specified output path
@@ -155,7 +155,7 @@ fn compile(paths: &CompilationPaths) {
     }
     println!("SUCCESS");
 
-    println!("Running `gcc`... ");
+    print!("Running `gcc`... ");
     let output = Command::new("gcc")
         .args(&[obj_path, "-o", executable_path])
         .output()

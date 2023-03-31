@@ -4,13 +4,16 @@
 .SH NAME
 rustfuck \- Brainfuck to x86_64 intel assembly Compiler
 .SH SYNOPSIS
-\fBrustfuck\fR [\fB\-o\fR|\fB\-\-output\-path\fR] [\fB\-S\fR|\fB\-\-assembly\fR] [\fB\-\-keep\-files\fR] [\fB\-\-ast\fR] [\fB\-h\fR|\fB\-\-help\fR] [\fB\-V\fR|\fB\-\-version\fR] <\fIINPUT_PATH\fR> 
+\fBrustfuck\fR [\fB\-o\fR|\fB\-\-output\-path\fR] [\fB\-O \fR] [\fB\-S\fR|\fB\-\-assembly\fR] [\fB\-\-keep\-files\fR] [\fB\-\-ast\fR] [\fB\-h\fR|\fB\-\-help\fR] [\fB\-V\fR|\fB\-\-version\fR] <\fIINPUT_PATH\fR> 
 .SH DESCRIPTION
 Brainfuck to x86_64 intel assembly Compiler
 .SH OPTIONS
 .TP
 \fB\-o\fR, \fB\-\-output\-path\fR=\fIOUTPUT_PATH\fR
 Output path
+.TP
+\fB\-O\fR
+Enable optimizations
 .TP
 \fB\-S\fR, \fB\-\-assembly\fR
 Output generated assembly

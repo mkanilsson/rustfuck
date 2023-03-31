@@ -11,6 +11,10 @@ pub struct Cli {
     #[arg(short = 'o', long)]
     pub output_path: Option<String>,
 
+    /// Enable optimizations
+    #[arg(short = 'O')]
+    pub optimizations: bool,
+
     /// Output generated assembly
     #[arg(short = 'S', long)]
     pub assembly: bool,
