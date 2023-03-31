@@ -1,13 +1,12 @@
 use crate::ast::AST;
 
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 static TEMPLATE_START: &'static str = include_str!("../resources/asm/start.S");
 static TEMPLATE_END: &'static str = include_str!("../resources/asm/end.S");
 
 static TEMPLATE_RIGHT: &'static str = include_str!("../resources/asm/right.S");
 static TEMPLATE_LEFT: &'static str = include_str!("../resources/asm/left.S");
-
 static TEMPLATE_ADD: &'static str = include_str!("../resources/asm/add.S");
 static TEMPLATE_SUBTRACT: &'static str = include_str!("../resources/asm/subtract.S");
 
@@ -16,14 +15,11 @@ static TEMPLATE_GET_CHAR: &'static str = include_str!("../resources/asm/getchar.
 
 static TEMPLATE_LOOP_END: &'static str = include_str!("../resources/asm/loop.S");
 
-fn gen_label(hint: &str) -> String {
-    let rand_string: String = thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(15)
-        .map(char::from)
-        .collect();
+static GLOBAL_LABEL_COUNT: AtomicUsize = AtomicUsize::new(0);
 
-    format!("{hint}_{rand_string}")
+fn gen_label(hint: &str) -> String {
+    let counter = GLOBAL_LABEL_COUNT.fetch_add(1, Ordering::SeqCst);
+    format!("{hint}_{counter}")
 }
 
 pub fn codegen(ast: AST) -> String {

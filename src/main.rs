@@ -74,6 +74,3 @@ fn compile(filename: &str) {
     }
     println!("`gcc` succeed...");
 }
-
-// [43(+) 32( ) 0 ]
-//
