@@ -1,13 +1,15 @@
 # Rustfuck
 
-A brainfuck to x86_64 intel assembly Compiler written in rust.
+A brainfuck to x86_64 assembly or C Compiler written in rust.
 
 Currently, it required libc and needs to be compiled and linked with `as` and `gcc`.
+
+__This readme is currently a bit outdated__
 
 ## Usage
 
 ```sh
-Brainfuck to x86_64 intel assembly Compiler
+Brainfuck to x86_64 assembly or C Compiler
 
 Usage: rustfuck [OPTIONS] <INPUT_PATH>
 
@@ -18,6 +20,7 @@ Options:
   -o, --output-path <OUTPUT_PATH>  Output path
   -O                               Enable optimizations
   -S, --assembly                   Output generated assembly
+  -C                               Output generated C code
       --keep-files                 Keep intermediate files
       --ast                        Print generated AST
   -h, --help                       Print help

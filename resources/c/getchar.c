@@ -1,0 +1,1 @@
+*ptr = get_character(); // ,

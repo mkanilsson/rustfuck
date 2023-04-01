@@ -1,6 +1,6 @@
 use clap::Parser;
 
-/// Brainfuck to x86_64 intel assembly Compiler
+/// Brainfuck to x86_64 assembly or C Compiler
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
@@ -18,6 +18,10 @@ pub struct Cli {
     /// Output generated assembly
     #[arg(short = 'S', long)]
     pub assembly: bool,
+
+    /// Output generated C code
+    #[arg(short = 'C')]
+    pub c: bool,
 
     /// Keep intermediate files
     #[arg(long)]
